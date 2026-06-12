@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 智能伴侣</title>
+
+  <!-- React 18 CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel standalone -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- Google Fonts for SiYuan/HeiTi fallback -->
+
+  <style>
+    /* ===== RESET & GLOBAL ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'SimHei', '黑体', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      background: #0a0a1a;
+      color: #e0e0e0;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    #root {
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.05);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.15);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* ===== LAYOUT ===== */
+    .app-container {
+      height: 100vh;
+      display: flex;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ===== AI START BUTTON (top-left) ===== */
+    .ai-button-wrapper {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+    }
+
+    .ai-start-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #fff;
+      background: #2a2a4a;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .ai-start-btn:hover {
+      transform: scale(1.08);
+    }
+
+    .ai-start-btn.active {
+      animation: aiSpin 3s linear infinite;
+      background: conic-gradient(
+        #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #9b59b6, #ff6b6b
+      );
+      box-shadow: 0 4px 30px rgba(77, 150, 255, 0.4),
+                  0 0 60px rgba(155, 89, 182, 0.2);
+    }
+
+    .ai-start-btn .btn-inner {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #1a1a2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+    .ai-start-btn.active .btn-inner {
+      background: rgba(10, 10, 26, 0.7);
+      backdrop-filter: blur(4px);
+    }
+
+    .ai-start-btn .api-key-input-overlay {
+      display: none;
+      position: absolute;
+      top: 64px;
+      left: 0;
+      background: #1e1e3a;
+      border: 1px solid #3a3a6a;
+      border-radius: 12px;
+      padding: 16px;
+      width: 320px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+      z-index: 1001;
+    }
+    .ai-start-btn .api-key-input-overlay.show {
+      display: block;
+    }
+    .ai-start-btn .api-key-input-overlay label {
+      display: block;
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 8px;
+    }
+    .ai-start-btn .api-key-input-overlay input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #3a3a6a;
+      background: #12122a;
+      color: #e0e0e0;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    .ai-start-btn .api-key-input-overlay input:focus {
+      border-color: #4d96ff;
+    }
+    .ai-start-btn .api-key-input-overlay .api-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .ai-start-btn .api-key-input-overlay .api-actions button {
+      flex: 1;
+      padding: 8px 0;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      transition: all 0.3s;
+    }
+    .api-actions .btn-confirm {
+      background: linear-gradient(135deg, #4d96ff, #9b59b6);
+      color: #fff;
+    }
+    .api-actions .btn-confirm:hover {
+      opacity: 0.85;
+    }
+    .api-actions .btn-cancel {
+      background: #2a2a4a;
+      color: #aaa;
+    }
+    .api-actions .btn-cancel:hover {
+      background: #3a3a5a;
+    }
+
+    @keyframes aiSpin {
+      0% { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(360deg); }
+    }
+
+    /* ===== LEFT DRAWER ===== */
+    .left-drawer-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.4);
+      z-index: 899;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .left-drawer-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .left-drawer {
+      position: fixed;
+      top: 0;
+      left: -280px;
+      width: 260px;
+      height: 100vh;
+      background: linear-gradient(180deg, #12122a 0%, #1a1a3a 100%);
+      border-right: 1px solid rgba(255,255,255,0.06);
+      z-index: 900;
+      transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 20px;
+      box-shadow: 4px 0 40px rgba(0,0,0,0.5);
+      font-family: 'SimHei', '黑体', 'Microsoft YaHei', sans-serif;
+    }
+    .left-drawer.open {
+      left: 0;
+    }
+
+    .left-drawer .drawer-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4d96ff, #9b59b6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      color: #fff;
+      margin-bottom: 8px;
+      box-shadow: 0 4px 20px rgba(77, 96, 255, 0.3);
+    }
+
+    .left-drawer .drawer-username {
+      font-size: 16px;
+      color: #e0e0e0;
+      margin-bottom: 30px;
+      font-weight: 600;
+    }
+
+    .left-drawer .drawer-menu {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .left-drawer .drawer-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: transparent;
+      border: none;
+      color: #c0c0d0;
+      font-size: 15px;
+      font-family: 'SimHei', '黑体', 'Microsoft YaHei', sans-serif;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .left-drawer .drawer-menu-item:hover {
+      background: rgba(77, 150, 255, 0.12);
+      color: #fff;
+    }
+    .left-drawer .drawer-menu-item i {
+      width: 22px;
+      font-size: 16px;
+      color: #7a7aaa;
+    }
+    .left-drawer .drawer-menu-item:hover i {
+      color: #4d96ff;
+    }
+
+    /* ===== RIGHT MAIN AREA ===== */
+    .main-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      margin-left: 0;
+      transition: margin-left 0.35s ease;
+      min-width: 0;
+    }
+    .main-area.drawer-open {
+      margin-left: 260px;
+    }
+
+    /* ===== VIDEO CHAT TOP ===== */
+    .video-chat-bar {
+      height: 180px;
+      min-height: 180px;
+      background: linear-gradient(135deg, #0d0d24 0%, #16163a 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      padding: 0 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .video-chat-bar::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at 30% 50%, rgba(77, 150, 255, 0.03) 0%, transparent 60%),
+                  radial-gradient(ellipse at 70% 50%, rgba(155, 89, 182, 0.03) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .video-frame {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 1;
+    }
+
+    .video-frame .video-circle {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      color: #fff;
+      background: #1a1a3a;
+      overflow: hidden;
+      position: relative;
+      transition: border-color 0.3s;
+    }
+    .video-frame .video-circle.my-video {
+      border-color: rgba(77, 150, 255, 0.3);
+    }
+    .video-frame .video-circle video, .video-frame .video-circle .no-video-placeholder {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      background: #1a1a3a;
+    }
+
+    /* AI Avatar with ripple */
+    .video-frame .video-circle.ai-avatar {
+      border-color: rgba(155, 89, 182, 0.3);
+    }
+
+    .ai-avatar-wrapper {
+      position: relative;
+    }
+
+    .ripple-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 2px solid rgba(155, 89, 182, 0.4);
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .ripple-ring:nth-child(2) {
+      animation-delay: 0.4s;
+    }
+    .ripple-ring:nth-child(3) {
+      animation-delay: 0.8s;
+    }
+
+    .ai-avatar-wrapper.speaking .ripple-ring {
+      animation: rippleWave 1.6s ease-out infinite;
+    }
+
+    .ai-avatar-wrapper.speaking .video-circle.ai-avatar {
+      border-color: #9b59b6;
+      box-shadow: 0 0 30px rgba(155, 89, 182, 0.3);
+    }
+
+    @keyframes rippleWave {
+      0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0.8;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(2.2);
+        opacity: 0;
+      }
+    }
+
+    .video-label {
+      font-size: 12px;
+      color: #888;
+      letter-spacing: 1px;
+    }
+
+    .video-chat-divider {
+      width: 40px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transform: rotate(90deg);
+    }
+
+    /* ===== CHAT MESSAGES ===== */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: rgba(10,10,26,0.5);
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      max-width: 75%;
+      animation: msgIn 0.3s ease;
+    }
+    .message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    .message.ai {
+      align-self: flex-start;
+    }
+
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message .msg-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .message.user .msg-avatar {
+      background: linear-gradient(135deg, #4d96ff, #3578d6);
+      color: #fff;
+    }
+    .message.ai .msg-avatar {
+      background: linear-gradient(135deg, #9b59b6, #7d3c98);
+      color: #fff;
+    }
+
+    .message .msg-bubble {
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+    .message.user .msg-bubble {
+      background: linear-gradient(135deg, #4d96ff, #3578d6);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .message.ai .msg-bubble {
+      background: #1e1e3a;
+      color: #d0d0e0;
+      border-bottom-left-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .message .msg-bubble img {
+      max-width: 200px;
+      border-radius: 8px;
+      margin-top: 6px;
+      display: block;
+    }
+
+    .message .msg-time {
+      font-size: 11px;
+      color: #666;
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+    .message.user .msg-time {
+      text-align: right;
+    }
+
+    /* ===== INPUT AREA ===== */
+    .input-area {
+      padding: 12px 24px 18px;
+      background: #0d0d24;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .input-area .input-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      background: #16163a;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 6px 6px 6px 16px;
+      transition: border-color 0.3s;
+    }
+    .input-area .input-wrapper:focus-within {
+      border-color: rgba(77, 150, 255, 0.3);
+    }
+
+    .input-area .input-wrapper textarea {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: #e0e0e0;
+      font-size: 14px;
+      font-family: 'SimHei', '黑体', 'Microsoft YaHei', sans-serif;
+      resize: none;
+      outline: none;
+      padding: 8px 0;
+      max-height: 120px;
+      line-height: 1.5;
+    }
+
+    .input-area .input-wrapper textarea::placeholder {
+      color: #555;
+    }
+
+    .input-area .action-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: #7a7aaa;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all 0.25s;
+      flex-shrink: 0;
+    }
+    .input-area .action-btn:hover {
+      color: #4d96ff;
+      background: rgba(77, 150, 255, 0.1);
+    }
+
+    .input-area .send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #4d96ff, #9b59b6);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+    .input-area .send-btn:hover {
+      transform: scale(1.06);
+      box-shadow: 0 4px 20px rgba(77, 150, 255, 0.3);
+    }
+    .input-area .send-btn:active {
+      transform: scale(0.94);
+    }
+
+    /* ===== EMOJI PICKER ===== */
+    .emoji-picker-overlay {
+      position: fixed;
+      bottom: 80px;
+      right: 30px;
+      width: 380px;
+      height: 400px;
+      background: #16163a;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      box-shadow: 0 10px 60px rgba(0,0,0,0.6);
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: emojiIn 0.2s ease;
+    }
+
+    @keyframes emojiIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .emoji-picker-overlay .emoji-header {
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #aaa;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      gap: 12px;
+    }
+    .emoji-picker-overlay .emoji-header span {
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.2s;
+      font-size: 18px;
+    }
+    .emoji-picker-overlay .emoji-header span:hover,
+    .emoji-picker-overlay .emoji-header span.active {
+      background: rgba(77, 150, 255, 0.15);
+    }
+
+    .emoji-picker-overlay .emoji-grid {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-content: flex-start;
+    }
+
+    .emoji-picker-overlay .emoji-grid .emoji-item {
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    .emoji-picker-overlay .emoji-grid .emoji-item:hover {
+      background: rgba(77, 150, 255, 0.15);
+    }
+
+    /* File input hidden */
+    .file-input-hidden {
+      display: none;
+    }
+
+    /* Image preview in input */
+    .image-preview-bar {
+      display: flex;
+      gap: 8px;
+      padding: 8px 24px 0;
+      background: #0d0d24;
+    }
+    .image-preview-bar .preview-item {
+      width: 60px;
+      height: 60px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+      position: relative;
+      cursor: pointer;
+    }
+    .image-preview-bar .preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .image-preview-bar .preview-item .remove-preview {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      font-size: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .video-chat-bar { height: 130px; min-height: 130px; gap: 20px; }
+      .video-frame .video-circle { width: 70px; height: 70px; font-size: 24px; }
+      .ripple-ring { width: 70px; height: 70px; }
+      .message { max-width: 90%; }
+      .chat-messages { padding: 14px 16px; }
+      .input-area { padding: 10px 14px 14px; }
+      .emoji-picker-overlay { width: 320px; height: 360px; right: 10px; }
+      .main-area.drawer-open { margin-left: 0; }
+      .left-drawer { width: 220px; }
+      .ai-start-btn .api-key-input-overlay { width: 280px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback, createContext, useContext } = React;
+
+    // ===== EMOJI DATA =====
+    const EMOJI_CATEGORIES = {
+      '😊': ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😗','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🫢','🫣','🤫','🤔','🫡','🤐','🤨','😐','😑','😶','🫥','😏','😒','🙄','😬','😮‍💨','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🥴','😵','🤯','🥳','🥺','😢','😭','😤','😠','😡','🤬','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖'],
+      '❤️': ['❤️','🧡','💛','💚','💙','💜','🖤','🩷','🧡','🤍','🤎','💔','❤️‍🔥','❤️‍🩹','💕','💞','💓','💗','💖','💘','💝','💟','♥️','🫶','🤝','👍','👎','👊','✊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦵','🦶','👂','🦻','👃','🧠','🫀','🫁','👀','👁️','👅','👄'],
+      '🐱': ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐻‍❄️','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐒','🐔','🐧','🐦','🐤','🐣','🐥','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🪱','🐛','🦋','🐌','🐞','🐜','🪰','🪲','🪳','🦟','🦗','🕷️','🦂','🐢','🐍','🦎','🦖','🦕','🐙','🦑','🦐','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈','🪸','🐊','🦭'],
+      '🍎': ['🍏','🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥒','🌶️','🫑','🌽','🥕','🫒','🧄','🧅','🥔','🍠','🫘','🥐','🍞','🥖','🥨','🧀','🥚','🍳','🧈','🥞','🧇','🥓','🥩','🍗','🍖','🦴','🌭','🍔','🍟','🍕','🫓','🥪','🥙','🧆','🌮','🌯','🫔','🥗','🥘','🫕','🥫','🍝','🍜','🍲','🍛','🍣','🍱','🥟','🦪','🍤','🍙','🍚','🍘','🍥','🥠','🥮','🍢','🍡','🍧','🍨','🍦','🥧','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍿','🍩','🍪','🌰','🥜','🍯','🥛','🍼','🫖','☕','🍵','🧃','🥤','🧋','🍶','🍺','🍻','🥂','🍷','🫗','🥃','🍸','🍹','🧉','🍾'],
+      '⚽': ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🪀','🏓','🏸','🏒','🏑','🥍','🏏','🪃','🥅','⛳','🪁','🏹','🎣','🤿','🥊','🥋','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','⛷️','🏂','🪂','🏋️','🤼','🤸','🤺','⛹️','🤾','🏌️','🏇','🧘','🏄','🏊','🤽','🚣','🧗','🚵','🚴','🏆','🥇','🥈','🥉','🏅','🎖️','🏵️','🎗️','🎫','🎟️','🎪','🤹','🎭','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🪘','🎷','🎺','🪗','🎸','🪕','🎻','🎲','♟️','🎯','🎳','🎮','🕹️'],
+      '🚗': ['🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🚜','🏍️','🛵','🛺','🚲','🛴','🛹','🚏','🛣️','🛤️','⛽','🛞','🚨','🚥','🚧','⚓','🛳️','⛵','🛶','🚤','🛴','✈️','🛩️','🛫','🛬','🪁','💺','🚁','🚟','🚠','🚡','🛰️','🚀','🛸','🏠','🏡','🏘️','🏢','🏣','🏤','🏥','🏦','🏨','🏩','🏪','🏫','🏬','🏭','🏯','🏰','💒','🗼','🗽','⛪','🕌','🛕','🕍','⛩️','🕋','⛲','🌋','🏔️','🏕️','🏖️','🏜️','🏝️','🏟️','🏛️','🛖'],
+      '💡': ['⌚','📱','💻','⌨️','🖥️','🖨️','🖱️','🖲️','🕹️','🗜️','💽','💾','💿','📀','📼','📷','📸','📹','🎥','📽️','🎞️','📞','☎️','📟','📠','📺','📻','🎙️','🎚️','🎛️','🧭','⏰','⏲️','⏱️','🕰️','🪫','🔋','🛢️','💵','💴','💶','💷','🪙','💰','💳','💎','⚖️','🪜','🧰','🪛','🔧','🔨','⚒️','🛠️','⛏️','🪚','🔩','⚙️','🪤','🧱','⛓️','🧲','🔫','💣','🧨','🪓','🔪','🗡️','⚔️','🛡️','🚬','⚰️','🪦','⚱️','🏺','🔮','📿','💈','⚗️','🔭','🔬','🕳️','🩻','🩹','🩺','💊','💉','🩸','🧬','🦠','🧫','🧪','🌡️','🧹','🪠','🧺','🧻','🚽','🚰','🚿','🛁','🛀','🧼','🪥','🪒','🧽','🪣','🧴','🛎️','🔑','🗝️','🚪','🪑','🛋️','🛏️','🛌','🧸','🪆','🖼️','🪞','🪟','🛍️','🛒','🎁','🎈','🎏','🎀','🪄','🪅','🎊','🎉','🎎','🏮','🎐','🧧','✉️','📩','📨','📧','💌','📥','📤','📦','🏷️','📪','📫','📬','📭','📮','📯','📜','📃','📄','📑','🧾','📊','📈','📉','🗒️','🗓️','📆','📅','📇','🗃️','🗳️','🗄️','📋','📁','📂','🗂️','🗞️','📰','📓','📔','📒','📕','📗','📘','📙','📚','📖','🔖','🧷','🔗','📎','🖇️','📐','📏','🧮','📌','📍','✂️','🖊️','🖋️','✒️','🖌️','🖍️','📝','📝','✏️','🔍','🔎','🔏','🔐','🔒','🔓']
+    };
+
+    const CATEGORY_ICONS = ['😊','❤️','🐱','🍎','⚽','🚗','💡'];
+    const CATEGORY_LABELS = ['笑脸','爱心','动物','食物','运动','旅行','物品'];
+
+    // ===== HOOK: CLICK OUTSIDE =====
+    function useClickOutside(ref, handler) {
+      useEffect(() => {
+        function onMouseDown(e) {
+          if (ref.current && !ref.current.contains(e.target)) handler(e);
+        }
+        document.addEventListener('mousedown', onMouseDown);
+        return () => document.removeEventListener('mousedown', onMouseDown);
+      }, [ref, handler]);
+    }
+
+    // ===== EMOJI PICKER COMPONENT =====
+    function EmojiPicker({ onSelect, onClose }) {
+      const [category, setCategory] = useState('😊');
+      const pickerRef = useRef(null);
+      useClickOutside(pickerRef, onClose);
+
+      return (
+        <div className="emoji-picker-overlay" ref={pickerRef}>
+          <div className="emoji-header">
+            {CATEGORY_ICONS.map((icon, i) => (
+              <span
+                key={icon}
+                className={category === icon ? 'active' : ''}
+                onClick={() => setCategory(icon)}
+                title={CATEGORY_LABELS[i]}
+              >
+                {icon}
+              </span>
+            ))}
+          </div>
+          <div className="emoji-grid">
+            {(EMOJI_CATEGORIES[category] || []).map((emoji) => (
+              <span
+                key={emoji}
+                className="emoji-item"
+                onClick={() => { onSelect(emoji); }}
+              >
+                {emoji}
+              </span>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ===== API KEY INPUT OVERLAY =====
+    function ApiKeyInput({ show, onConfirm, onCancel }) {
+      const [value, setValue] = useState(localStorage.getItem('ai_api_key') || '');
+      const inputRef = useRef(null);
+
+      useEffect(() => {
+        if (show && inputRef.current) {
+          inputRef.current.focus();
+          inputRef.current.select();
+        }
+      }, [show]);
+
+      function handleSubmit() {
+        const trimmed = value.trim();
+        if (trimmed) {
+          localStorage.setItem('ai_api_key', trimmed);
+          onConfirm(trimmed);
+        } else {
+          localStorage.removeItem('ai_api_key');
+          onConfirm('');
+        }
+      }
+
+      function handleKeyDown(e) {
+        if (e.key === 'Enter') handleSubmit();
+        if (e.key === 'Escape') onCancel();
+      }
+
+      if (!show) return null;
+
+      return (
+        <div className="api-key-input-overlay show" onClick={(e) => e.stopPropagation()}>
+          <label>输入 API Key 激活 AI</label>
+          <input
+            ref={inputRef}
+            type="password"
+            placeholder="sk-..."
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <div className="api-actions">
+            <button className="btn-cancel" onClick={onCancel}>取消</button>
+            <button className="btn-confirm" onClick={handleSubmit}>确认</button>
+          </div>
+        </div>
+      );
+    }
+
+    // ===== AI START BUTTON =====
+    function AiStartButton({ isActive, onToggle }) {
+      const [showApiInput, setShowApiInput] = useState(false);
+
+      function handleClick(e) {
+        e.stopPropagation();
+        setShowApiInput((prev) => !prev);
+      }
+
+      function handleConfirm(key) {
+        onToggle(!!key);
+        setShowApiInput(false);
+      }
+
+      function handleCancel() {
+        setShowApiInput(false);
+      }
+
+      return (
+        <div className="ai-button-wrapper">
+          <button
+            className={`ai-start-btn ${isActive ? 'active' : ''}`}
+            onClick={handleClick}
+            title="AI 设置"
+          >
+            <span className="btn-inner">
+              <i className={`fas ${isActive ? 'fa-robot' : 'fa-power-off'}`}></i>
+            </span>
+          </button>
+          <ApiKeyInput show={showApiInput} onConfirm={handleConfirm} onCancel={handleCancel} />
+        </div>
+      );
+    }
+
+    // ===== LEFT DRAWER =====
+    function LeftDrawer({ isOpen, onClose, username, avatarEmoji }) {
+      return (
+        <>
+          <div className={`left-drawer-overlay ${isOpen ? 'open' : ''}`} onClick={onClose} />
+          <div className={`left-drawer ${isOpen ? 'open' : ''}`}>
+            <div className="drawer-avatar">{avatarEmoji}</div>
+            <div className="drawer-username">{username}</div>
+            <div className="drawer-menu">
+              <button className="drawer-menu-item" onClick={() => alert('登录功能')}>
+                <i className="fas fa-sign-in-alt"></i>
+                <span>登录</span>
+              </button>
+              <button className="drawer-menu-item" onClick={() => alert('帮助中心')}>
+                <i className="fas fa-question-circle"></i>
+                <span>帮助</span>
+              </button>
+              <button className="drawer-menu-item" onClick={() => alert('设置页面')}>
+                <i className="fas fa-cog"></i>
+                <span>设置</span>
+              </button>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // ===== MESSAGE COMPONENT =====
+    function MessageItem({ msg }) {
+      const timeStr = new Date(msg.time).toLocaleTimeString('zh-CN', {
+        hour: '2-digit', minute: '2-digit'
+      });
+
+      return (
+        <div className={`message ${msg.role}`}>
+          <div className="msg-avatar">
+            {msg.role === 'user' ? '👤' : '🤖'}
+          </div>
+          <div>
+            <div className="msg-bubble">
+              {msg.text}
+              {msg.image && <img src={msg.image} alt="发送的图片" />}
+            </div>
+            <div className="msg-time">{timeStr}</div>
+          </div>
+        </div>
+      );
+    }
+
+    // ===== VIDEO CHAT BAR =====
+    function VideoChatBar({ aiSpeaking }) {
+      const myVideoRef = useRef(null);
+      const [cameraOn, setCameraOn] = useState(false);
+
+      useEffect(() => {
+        if (cameraOn && myVideoRef.current) {
+          navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+            .then((stream) => {
+              if (myVideoRef.current) myVideoRef.current.srcObject = stream;
+            })
+            .catch(() => {
+              setCameraOn(false);
+            });
+        }
+        return () => {
+          if (myVideoRef.current && myVideoRef.current.srcObject) {
+            myVideoRef.current.srcObject.getTracks().forEach((t) => t.stop());
+          }
+        };
+      }, [cameraOn]);
+
+      return (
+        <div className="video-chat-bar">
+          {/* My Video */}
+          <div className="video-frame">
+            <div className="video-circle my-video" onClick={() => setCameraOn((c) => !c)}>
+              {cameraOn ? (
+                <video ref={myVideoRef} autoPlay muted playsInline />
+              ) : (
+                <div className="no-video-placeholder">👤</div>
+              )}
+            </div>
+            <span className="video-label">{cameraOn ? '📷 我的视频' : '👤 我的头像'}</span>
+          </div>
+
+          <div style={{ color: '#555', fontSize: 20 }}>vs</div>
+
+          {/* AI Avatar */}
+          <div className="video-frame">
+            <div className={`ai-avatar-wrapper ${aiSpeaking ? 'speaking' : ''}`}>
+              <div className="ripple-ring"></div>
+              <div className="ripple-ring"></div>
+              <div className="ripple-ring"></div>
+              <div className="video-circle ai-avatar">
+                <div className="no-video-placeholder">🤖</div>
+              </div>
+            </div>
+            <span className="video-label">🤖 AI 伴侣</span>
+          </div>
+        </div>
+      );
+    }
+
+    // ===== WELCOME MESSAGE =====
+    function WelcomeMessages({ onSendDemo }) {
+      const demos = [
+        '你好，介绍一下自己',
+        '今天有什么新闻？',
+        '帮我写一首诗',
+        '推荐一本好书',
+      ];
+
+      return (
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 20,
+          padding: 20,
+          color: '#888',
+        }}>
+          <div style={{ fontSize: 64, opacity: 0.3 }}>🤖</div>
+          <div style={{ fontSize: 20, color: '#aaa', marginBottom: 8 }}>AI 智能伴侣</div>
+          <div style={{ fontSize: 14, color: '#666', marginBottom: 16 }}>
+            输入 API Key 激活 AI，开始对话
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
+            {demos.map((text) => (
+              <button
+                key={text}
+                onClick={() => onSendDemo(text)}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: 20,
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'rgba(255,255,255,0.03)',
+                  color: '#999',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(77,150,255,0.1)';
+                  e.target.style.color = '#4d96ff';
+                  e.target.style.borderColor = 'rgba(77,150,255,0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'rgba(255,255,255,0.03)';
+                  e.target.style.color = '#999';
+                  e.target.style.borderColor = 'rgba(255,255,255,0.08)';
+                }}
+              >
+                {text}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ===== MAIN APP =====
+    function App() {
+      const [apiKeyActive, setApiKeyActive] = useState(!!localStorage.getItem('ai_api_key'));
+      const [drawerOpen, setDrawerOpen] = useState(false);
+      const [messages, setMessages] = useState([]);
+      const [inputText, setInputText] = useState('');
+      const [showEmoji, setShowEmoji] = useState(false);
+      const [pendingImages, setPendingImages] = useState([]);
+      const [aiSpeaking, setAiSpeaking] = useState(false);
+      const [username] = useState('旅行者');
+      const chatRef = useRef(null);
+      const fileInputRef = useRef(null);
+      const textareaRef = useRef(null);
+
+      const toggleDrawer = useCallback(() => setDrawerOpen((d) => !d), []);
+
+      // Auto scroll messages
+      useEffect(() => {
+        if (chatRef.current) {
+          chatRef.current.scrollTop = chatRef.current.scrollHeight;
+        }
+      }, [messages]);
+
+      function handleApiToggle(active) {
+        setApiKeyActive(active);
+      }
+
+      function addMessage(role, text, image) {
+        const msg = {
+          id: Date.now() + Math.random(),
+          role,
+          text,
+          image: image || null,
+          time: Date.now(),
+        };
+        setMessages((prev) => [...prev, msg]);
+        return msg;
+      }
+
+      function handleSend() {
+        const text = inputText.trim();
+        if (!text && pendingImages.length === 0) return;
+
+        const image = pendingImages[0] || null;
+        addMessage('user', text, image);
+        setInputText('');
+        setPendingImages([]);
+        setShowEmoji(false);
+
+        // Simulate AI response
+        setAiSpeaking(true);
+        setTimeout(() => {
+          const AI_REPLIES = [
+            '这是一个很有意思的问题，让我想想 🤔',
+            '好的，我明白了！让我来帮你解决 💡',
+            '很高兴和你聊天 😊',
+            '你说得对，我也有同感！',
+            '让我查一下资料... 找到了！📚',
+            '这个问题很有深度，我来分析一下 🔍',
+          ];
+          const reply = AI_REPLIES[Math.floor(Math.random() * AI_REPLIES.length)];
+          addMessage('ai', reply);
+          setAiSpeaking(false);
+        }, 1500 + Math.random() * 1000);
+      }
+
+      function handleImageUpload(e) {
+        const files = Array.from(e.target.files || []);
+        const newImages = [];
+        files.forEach((file) => {
+          if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              setPendingImages((prev) => [...prev, ev.target.result]);
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+        e.target.value = '';
+      }
+
+      function removePendingImage(idx) {
+        setPendingImages((prev) => prev.filter((_, i) => i !== idx));
+      }
+
+      function handleEmojiSelect(emoji) {
+        setInputText((prev) => prev + emoji);
+        setShowEmoji(false);
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+        }
+      }
+
+      function handleKeyDown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleSend();
+        }
+      }
+
+      function handleDemoSend(text) {
+        setInputText(text);
+        setTimeout(() => {
+          if (textareaRef.current) {
+            textareaRef.current.value = text;
+          }
+          handleSend();
+        }, 10);
+      }
+
+      // Adjust textarea height
+      useEffect(() => {
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+          textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
+        }
+      }, [inputText]);
+
+      const hasContent = messages.length > 0;
+
+      return (
+        <div className="app-container">
+          {/* AI Button */}
+          <AiStartButton isActive={apiKeyActive} onToggle={handleApiToggle} />
+
+          {/* Menu toggle (for drawer) */}
+          <button
+            onClick={toggleDrawer}
+            style={{
+              position: 'fixed',
+              top: 22,
+              left: 86,
+              zIndex: 999,
+              background: 'transparent',
+              border: 'none',
+              color: '#7a7aaa',
+              fontSize: 20,
+              cursor: 'pointer',
+              padding: '4px 8px',
+              transition: 'color 0.2s',
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#4d96ff'}
+            onMouseLeave={(e) => e.target.style.color = '#7a7aaa'}
+          >
+            <i className={`fas ${drawerOpen ? 'fa-times' : 'fa-bars'}`}></i>
+          </button>
+
+          {/* Left Drawer */}
+          <LeftDrawer
+            isOpen={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            username={username}
+            avatarEmoji="🧑‍🚀"
+          />
+
+          {/* Main Area */}
+          <div className={`main-area ${drawerOpen ? 'drawer-open' : ''}`}>
+            {/* Video Chat Bar */}
+            <VideoChatBar aiSpeaking={aiSpeaking} />
+
+            {/* Chat Messages */}
+            {hasContent ? (
+              <div className="chat-messages" ref={chatRef}>
+                {messages.map((msg) => (
+                  <MessageItem key={msg.id} msg={msg} />
+                ))}
+              </div>
+            ) : (
+              <WelcomeMessages onSendDemo={handleDemoSend} />
+            )}
+
+            {/* Image Preview */}
+            {pendingImages.length > 0 && (
+              <div className="image-preview-bar">
+                {pendingImages.map((img, i) => (
+                  <div key={i} className="preview-item">
+                    <img src={img} alt="preview" />
+                    <button className="remove-preview" onClick={() => removePendingImage(i)}>
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Input Area */}
+            <div className="input-area">
+              <div className="input-wrapper">
+                {/* Image upload button */}
+                <button
+                  className="action-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="发送图片"
+                >
+                  <i className="fas fa-image"></i>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="file-input-hidden"
+                  onChange={handleImageUpload}
+                />
+
+                <textarea
+                  ref={textareaRef}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="输入消息... (Shift+Enter 换行)"
+                  rows={1}
+                />
+
+                {/* Emoji button */}
+                <button
+                  className="action-btn"
+                  onClick={() => setShowEmoji((e) => !e)}
+                  title="表情"
+                  style={{ color: showEmoji ? '#4d96ff' : undefined }}
+                >
+                  <i className="fas fa-smile"></i>
+                </button>
+              </div>
+
+              <button className="send-btn" onClick={handleSend} title="发送">
+                <i className="fas fa-paper-plane"></i>
+              </button>
+            </div>
+
+            {/* Emoji Picker */}
+            {showEmoji && (
+              <EmojiPicker
+                onSelect={handleEmojiSelect}
+                onClose={() => setShowEmoji(false)}
+              />
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ===== RENDER =====
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
