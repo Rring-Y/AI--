@@ -59,124 +59,7 @@
       overflow: hidden;
     }
 
-    /* ===== AI START BUTTON (top-left) ===== */
-    .ai-button-wrapper {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      z-index: 1000;
-    }
-
-    .ai-start-btn {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      color: #fff;
-      background: #2a2a4a;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-      transition: all 0.3s ease;
-      position: relative;
-    }
-    .ai-start-btn:hover {
-      transform: scale(1.08);
-    }
-
-    .ai-start-btn.active {
-      animation: aiSpin 3s linear infinite;
-      background: conic-gradient(
-        #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #9b59b6, #ff6b6b
-      );
-      box-shadow: 0 4px 30px rgba(77, 150, 255, 0.4),
-                  0 0 60px rgba(155, 89, 182, 0.2);
-    }
-
-    .ai-start-btn .btn-inner {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: #1a1a2e;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-    }
-    .ai-start-btn.active .btn-inner {
-      background: rgba(10, 10, 26, 0.7);
-      backdrop-filter: blur(4px);
-    }
-
-    .ai-start-btn .api-key-input-overlay {
-      display: none;
-      position: absolute;
-      top: 64px;
-      left: 0;
-      background: #1e1e3a;
-      border: 1px solid #3a3a6a;
-      border-radius: 12px;
-      padding: 16px;
-      width: 320px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
-      z-index: 1001;
-    }
-    .ai-start-btn .api-key-input-overlay.show {
-      display: block;
-    }
-    .ai-start-btn .api-key-input-overlay label {
-      display: block;
-      font-size: 13px;
-      color: #aaa;
-      margin-bottom: 8px;
-    }
-    .ai-start-btn .api-key-input-overlay input {
-      width: 100%;
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid #3a3a6a;
-      background: #12122a;
-      color: #e0e0e0;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.3s;
-    }
-    .ai-start-btn .api-key-input-overlay input:focus {
-      border-color: #4d96ff;
-    }
-    .ai-start-btn .api-key-input-overlay .api-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
-    }
-    .ai-start-btn .api-key-input-overlay .api-actions button {
-      flex: 1;
-      padding: 8px 0;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      font-family: inherit;
-      transition: all 0.3s;
-    }
-    .api-actions .btn-confirm {
-      background: linear-gradient(135deg, #4d96ff, #9b59b6);
-      color: #fff;
-    }
-    .api-actions .btn-confirm:hover {
-      opacity: 0.85;
-    }
-    .api-actions .btn-cancel {
-      background: #2a2a4a;
-      color: #aaa;
-    }
-    .api-actions .btn-cancel:hover {
-      background: #3a3a5a;
-    }
-
+    /* ===== AI SPIN ANIMATION (shared) ===== */
     @keyframes aiSpin {
       0% { filter: hue-rotate(0deg); }
       100% { filter: hue-rotate(360deg); }
@@ -221,6 +104,12 @@
       left: 0;
     }
 
+    .left-drawer .drawer-avatar-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+
     .left-drawer .drawer-avatar {
       width: 80px;
       height: 80px;
@@ -231,14 +120,104 @@
       justify-content: center;
       font-size: 36px;
       color: #fff;
-      margin-bottom: 8px;
       box-shadow: 0 4px 20px rgba(77, 96, 255, 0.3);
     }
+
+    /* Drawer AI button — top-left of avatar */
+    .left-drawer .drawer-ai-btn {
+      position: absolute;
+      top: -8px;
+      left: -8px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid #12122a;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #fff;
+      background: #2a2a4a;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      transition: all 0.3s ease;
+      z-index: 2;
+    }
+    .left-drawer .drawer-ai-btn:hover {
+      transform: scale(1.12);
+    }
+    .left-drawer .drawer-ai-btn.active {
+      animation: aiSpin 3s linear infinite;
+      background: conic-gradient(
+        #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #9b59b6, #ff6b6b
+      );
+      box-shadow: 0 0 16px rgba(77, 150, 255, 0.5);
+    }
+
+    /* API Key input inside drawer */
+    .left-drawer .drawer-api-input {
+      width: 100%;
+      background: rgba(30, 30, 58, 0.8);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .left-drawer .drawer-api-input label {
+      display: block;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .left-drawer .drawer-api-input input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: #0d0d24;
+      color: #e0e0e0;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    .left-drawer .drawer-api-input input:focus {
+      border-color: #4d96ff;
+    }
+    .left-drawer .drawer-api-input .drawer-api-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .left-drawer .drawer-api-input .drawer-api-actions button {
+      flex: 1;
+      padding: 6px 0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      transition: all 0.3s;
+    }
+    .drawer-api-actions .dbtn-confirm {
+      background: linear-gradient(135deg, #4d96ff, #9b59b6);
+      color: #fff;
+    }
+    .drawer-api-actions .dbtn-confirm:hover { opacity: 0.85; }
+    .drawer-api-actions .dbtn-cancel {
+      background: #2a2a4a;
+      color: #aaa;
+    }
+    .drawer-api-actions .dbtn-cancel:hover { background: #3a3a5a; }
 
     .left-drawer .drawer-username {
       font-size: 16px;
       color: #e0e0e0;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       font-weight: 600;
     }
 
@@ -252,7 +231,8 @@
     .left-drawer .drawer-menu-item {
       display: flex;
       align-items: center;
-      gap: 14px;
+      justify-content: center;
+      gap: 12px;
       padding: 12px 16px;
       border-radius: 12px;
       background: transparent;
@@ -262,6 +242,8 @@
       font-family: 'SimHei', '黑体', 'Microsoft YaHei', sans-serif;
       cursor: pointer;
       transition: all 0.25s ease;
+      width: 80%;
+      margin: 0 auto;
     }
     .left-drawer .drawer-menu-item:hover {
       background: rgba(77, 150, 255, 0.12);
@@ -710,7 +692,6 @@
       .emoji-picker-overlay { width: 320px; height: 360px; right: 10px; }
       .main-area.drawer-open { margin-left: 0; }
       .left-drawer { width: 220px; }
-      .ai-start-btn .api-key-input-overlay { width: 280px; }
     }
   </style>
 </head>
@@ -780,97 +761,73 @@
       );
     }
 
-    // ===== API KEY INPUT OVERLAY =====
-    function ApiKeyInput({ show, onConfirm, onCancel }) {
-      const [value, setValue] = useState(localStorage.getItem('ai_api_key') || '');
+    // ===== LEFT DRAWER (with AI button at avatar top-left) =====
+    function LeftDrawer({ isOpen, onClose, username, avatarEmoji, isActive, onToggle }) {
+      const [showApiInput, setShowApiInput] = useState(false);
+      const [apiKeyValue, setApiKeyValue] = useState(localStorage.getItem('ai_api_key') || '');
       const inputRef = useRef(null);
 
       useEffect(() => {
-        if (show && inputRef.current) {
+        if (showApiInput && inputRef.current) {
           inputRef.current.focus();
           inputRef.current.select();
         }
-      }, [show]);
+      }, [showApiInput]);
 
-      function handleSubmit() {
-        const trimmed = value.trim();
+      function handleApiSubmit() {
+        const trimmed = apiKeyValue.trim();
         if (trimmed) {
           localStorage.setItem('ai_api_key', trimmed);
-          onConfirm(trimmed);
+          onToggle(true);
         } else {
           localStorage.removeItem('ai_api_key');
-          onConfirm('');
+          onToggle(false);
         }
-      }
-
-      function handleKeyDown(e) {
-        if (e.key === 'Enter') handleSubmit();
-        if (e.key === 'Escape') onCancel();
-      }
-
-      if (!show) return null;
-
-      return (
-        <div className="api-key-input-overlay show" onClick={(e) => e.stopPropagation()}>
-          <label>输入 API Key 激活 AI</label>
-          <input
-            ref={inputRef}
-            type="password"
-            placeholder="sk-..."
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          <div className="api-actions">
-            <button className="btn-cancel" onClick={onCancel}>取消</button>
-            <button className="btn-confirm" onClick={handleSubmit}>确认</button>
-          </div>
-        </div>
-      );
-    }
-
-    // ===== AI START BUTTON =====
-    function AiStartButton({ isActive, onToggle }) {
-      const [showApiInput, setShowApiInput] = useState(false);
-
-      function handleClick(e) {
-        e.stopPropagation();
-        setShowApiInput((prev) => !prev);
-      }
-
-      function handleConfirm(key) {
-        onToggle(!!key);
         setShowApiInput(false);
       }
 
-      function handleCancel() {
-        setShowApiInput(false);
+      function handleApiKeyDown(e) {
+        if (e.key === 'Enter') handleApiSubmit();
+        if (e.key === 'Escape') setShowApiInput(false);
       }
 
-      return (
-        <div className="ai-button-wrapper">
-          <button
-            className={`ai-start-btn ${isActive ? 'active' : ''}`}
-            onClick={handleClick}
-            title="AI 设置"
-          >
-            <span className="btn-inner">
-              <i className={`fas ${isActive ? 'fa-robot' : 'fa-power-off'}`}></i>
-            </span>
-          </button>
-          <ApiKeyInput show={showApiInput} onConfirm={handleConfirm} onCancel={handleCancel} />
-        </div>
-      );
-    }
-
-    // ===== LEFT DRAWER =====
-    function LeftDrawer({ isOpen, onClose, username, avatarEmoji }) {
       return (
         <>
           <div className={`left-drawer-overlay ${isOpen ? 'open' : ''}`} onClick={onClose} />
           <div className={`left-drawer ${isOpen ? 'open' : ''}`}>
-            <div className="drawer-avatar">{avatarEmoji}</div>
+            {/* Avatar + AI button at its top-left */}
+            <div className="drawer-avatar-wrapper">
+              <div className="drawer-avatar">{avatarEmoji}</div>
+              <button
+                className={`drawer-ai-btn ${isActive ? 'active' : ''}`}
+                onClick={(e) => { e.stopPropagation(); setShowApiInput((p) => !p); }}
+                title="AI 设置"
+              >
+                <i className={`fas ${isActive ? 'fa-robot' : 'fa-power-off'}`}></i>
+              </button>
+            </div>
             <div className="drawer-username">{username}</div>
+
+            {/* API Key input (inside drawer) */}
+            {showApiInput && (
+              <div className="drawer-api-input">
+                <label>输入 API Key 激活 AI</label>
+                <input
+                  ref={inputRef}
+                  type="password"
+                  placeholder="sk-..."
+                  value={apiKeyValue}
+                  onChange={(e) => setApiKeyValue(e.target.value)}
+                  onKeyDown={handleApiKeyDown}
+                />
+                <div className="drawer-api-actions">
+                  <button className="dbtn-cancel" onClick={() => setShowApiInput(false)}>取消</button>
+                  <button className="dbtn-confirm" onClick={handleApiSubmit}>确认</button>
+                </div>
+              </div>
+            )}
+
+            {/* Centered menu buttons */}
             <div className="drawer-menu">
               <button className="drawer-menu-item" onClick={() => alert('登录功能')}>
                 <i className="fas fa-sign-in-alt"></i>
@@ -1148,37 +1105,44 @@
 
       return (
         <div className="app-container">
-          {/* AI Button */}
-          <AiStartButton isActive={apiKeyActive} onToggle={handleApiToggle} />
-
-          {/* Menu toggle (for drawer) */}
+          {/* Menu toggle (top-left) */}
           <button
             onClick={toggleDrawer}
             style={{
               position: 'fixed',
-              top: 22,
-              left: 86,
+              top: 20,
+              left: 20,
               zIndex: 999,
-              background: 'transparent',
+              background: 'rgba(42,42,74,0.6)',
+              backdropFilter: 'blur(8px)',
               border: 'none',
-              color: '#7a7aaa',
+              color: '#c0c0d0',
               fontSize: 20,
               cursor: 'pointer',
-              padding: '4px 8px',
-              transition: 'color 0.2s',
+              padding: '10px 14px',
+              borderRadius: 12,
+              transition: 'all 0.2s',
             }}
-            onMouseEnter={(e) => e.target.style.color = '#4d96ff'}
-            onMouseLeave={(e) => e.target.style.color = '#7a7aaa'}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgba(77,150,255,0.15)';
+              e.target.style.color = '#4d96ff';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'rgba(42,42,74,0.6)';
+              e.target.style.color = '#c0c0d0';
+            }}
           >
             <i className={`fas ${drawerOpen ? 'fa-times' : 'fa-bars'}`}></i>
           </button>
 
-          {/* Left Drawer */}
+          {/* Left Drawer (contains AI button at avatar top-left) */}
           <LeftDrawer
             isOpen={drawerOpen}
             onClose={() => setDrawerOpen(false)}
             username={username}
             avatarEmoji="🧑‍🚀"
+            isActive={apiKeyActive}
+            onToggle={handleApiToggle}
           />
 
           {/* Main Area */}
