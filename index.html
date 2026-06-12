@@ -907,17 +907,31 @@
 
           <div style={{ color: '#555', fontSize: 20 }}>vs</div>
 
-          {/* AI Avatar */}
+          {/* AI Avatar — message icon with stick-figure eyes */}
           <div className="video-frame">
             <div className={`ai-avatar-wrapper ${aiSpeaking ? 'speaking' : ''}`}>
               <div className="ripple-ring"></div>
               <div className="ripple-ring"></div>
               <div className="ripple-ring"></div>
               <div className="video-circle ai-avatar">
-                <div className="no-video-placeholder">🤖</div>
+                <svg viewBox="0 0 100 100" width="60" height="60" fill="none">
+                  {/* Message bubble */}
+                  <rect x="10" y="10" width="80" height="60" rx="16" ry="16" fill="url(#msgGrad)" />
+                  {/* Tail */}
+                  <polygon points="35,70 25,88 45,70" fill="url(#msgGrad)" />
+                  {/* Eyes — simple strokes */}
+                  <circle cx="38" cy="42" r="4" fill="#fff" />
+                  <circle cx="62" cy="42" r="4" fill="#fff" />
+                  <defs>
+                    <linearGradient id="msgGrad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#4d96ff" />
+                      <stop offset="100%" stop-color="#9b59b6" />
+                    </linearGradient>
+                  </defs>
+                </svg>
               </div>
             </div>
-            <span className="video-label">🤖 AI 伴侣</span>
+            <span className="video-label">💬 AI 伴侣</span>
           </div>
         </div>
       );
@@ -943,7 +957,7 @@
           padding: 20,
           color: '#888',
         }}>
-          <div style={{ fontSize: 64, opacity: 0.3 }}>🤖</div>
+          <div style={{ fontSize: 64, opacity: 0.3 }}>💬</div>
           <div style={{ fontSize: 20, color: '#aaa', marginBottom: 8 }}>AI 智能伴侣</div>
           <div style={{ fontSize: 14, color: '#666', marginBottom: 16 }}>
             输入 API Key 激活 AI，开始对话
